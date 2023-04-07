@@ -1,0 +1,211 @@
+# Nx experiments
+
+```elixir
+Mix.install(
+  [
+    {:nx, "~> 0.5.2"},
+    {:exla, "~> 0.5.2"}
+  ],
+  config: [
+    nx: [default_backend: EXLA.Backend]
+  ]
+)
+```
+
+## Section
+
+I'm reading this article: https://dockyard.com/blog/2021/04/08/up-and-running-nx and play along with it.
+
+```elixir
+Nx.tensor([[1, 2, 3], [4, 5, 6]])
+```
+
+According to Wikipedia: `In mathematics, a tensor is an algebraic object that describes a multilinear relationship between sets of algebraic objects related to a vector space.` The Nx definition of a tensor is not necessarily the same as the pure math definition of a tensor. Nx follows most of the conventions and precedents put forth by the Python ecosystem.For Elixir programmers, it’s easy to think of tensors as nested lists, with some additional metadata.
+
+<!-- livebook:{"break_markdown":true} -->
+
+A tensor’s shape is a tuple representing the size of each dimension in the tensor. In the examples above, the first tensor has a shape of {2, 3} as represented by [2][3] in the inspected tensor:
+
+```elixir
+Nx.shape(Nx.tensor([[1, 2, 3], [4, 5, 6]]))
+```
+
+All of the operations in the Nx library are tensor-aware, which means they work on tensors of any shape and type. Example:
+
+```elixir
+Nx.cos(Nx.tensor([1, 2, 3]))
+```
+
+```elixir
+Nx.sum(Nx.tensor([1, 2, 3]))
+```
+
+```elixir
+Nx.mean(Nx.tensor([1, 2, 3]))
+```
+
+Nx aggregate methods also have the added benefit of being capable of reducing along a single axis. For example, if you have a collection of examples in a batch, you might only want to compute the mean for single examples:
+
+```elixir
+Nx.mean(Nx.tensor([[1, 2, 3], [4, 5, 6]]), axes: [1])
+```
+
+Hm..so the below produces the mean of each _column_...
+
+```elixir
+Nx.mean(Nx.tensor([[[1, 2, 3], [4, 5, 6]]]), axes: [0, 1])
+```
+
+Nx also has binary operators that are tensor aware. Things like addition, subtraction, multiplication, and division work element-wise:
+
+```elixir
+Nx.add(Nx.tensor([1, 2, 3]), Nx.tensor([4, 5, 6]))
+```
+
+With binary operators, however, there is an additional caveat: the tensor shapes must be compatible or capable of being broadcasted to the same shape. Broadcasting occurs when the input tensors have different shapes:
+
+```elixir
+Nx.add(Nx.tensor(1), Nx.tensor([1, 2, 3]))
+```
+
+In order for two tensors to be capable of broadcasting, each of their dimensions must be compatible. Dimensions are compatible if one of the following requirements is met:
+
+* They are equal
+* One of the dimensions is size 1
+
+## Basic Linear Regression
+
+In this section, we’ll start to unlock some of the real power of Nx by solving a basic linear regression problem using gradient descent.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Nx.Defn is a module that contains the _Nxdefn_ definition. **defn** is a macro for declaring numerical definitions. So for example, the following definition will work on both tensors and scalars, because + internally resolves to _Nx.add/2_:
+
+```elixir
+defmodule LinReg do
+  import Nx.Defn
+
+  defn add_two(a, b) do
+    a + b
+  end
+end
+
+LinReg.add_two(Nx.tensor(2), Nx.tensor([1, 2, 3, 4]))
+```
+
+**defn** also has support for a special transformation: *grad*. **grad** is a macro that returns the gradient of a function with respect to some provided parameters. The gradient of a function provides information about the rate of change of a function with respect to some parameters.
+
+## Example: predict daily average users
+
+Example: imagine you want to predict the number of daily average users to your website based on the month, time of day, and whether or not there is an ongoing promotion on the website. You can collect data over the course of several months, and then use this data to fit a basic regression model that predicts daily average users for you.
+
+We’ll create a regression model that predicts an output variable with respect to 1 input variable. We’ll start by defining our training set outside of the LinReg module:
+
+_First, we define target_m, target_b and target_fn. Our linear function has the form: y = m*x + b, so we create a Stream that repeatedly generates batches of input and output pairs by applying target_fn on random inputs. Our goal is to learn target_m and target_b using gradient descent._
+
+```elixir
+target_m = :rand.normal(0.0, 10.0)
+target_b = :rand.normal(0.0, 5.0)
+target_fn = fn x -> target_m * x + target_b end
+
+data =
+  Stream.repeatedly(fn -> for _ <- 1..32, do: :rand.uniform() * 10 end)
+  |> Stream.map(fn x -> Enum.zip(x, Enum.map(x, target_fn)) end)
+
+IO.puts("Target m: #{target_m}\tTarget b: #{target_b}\n")
+```
+
+Hm...what does this mean? Can we print _data_ ?
+
+```elixir
+data |> Enum.take(2)
+```
+
+The next thing we need to define is our model. A model is really just a parameterized function that maps inputs to outputs. We know our function should have the form y = m * x + b, so we can easily define our model in the same way.
+
+Since we already have define a _LinReg_ module earlier, we give it the name _LinReg2_.
+
+Next, we need to define a loss function. Loss functions evaluate predictions with respect to true data, often to measure the divergence between a model’s representation of the data-generating distribution and the true representation of the data-generating distribution.
+It is most common to use _mean-squared error_ (MSE) as the loss function.
+
+MSE measures the average squared difference between our targets and predictions. As our predictions get closer to our targets, MSE tends towards 0. Given our loss function, we need a way to update our model such that it minimizes loss/3. We can achieve this using _gradient descent_. Gradient descent calculates the gradient of a loss function with respect to the input parameters. The gradient then provides information on how to update model parameters.
+
+```elixir
+defmodule LinReg2 do
+  import Nx.Defn
+
+  defn predict({m, b}, x) do
+    m * x + b
+  end
+
+  defn loss(params, x, y) do
+    y_pred = predict(params, x)
+    Nx.mean(Nx.pow(y - y_pred, 2))
+  end
+
+  # returns the updated parameters m and b.
+  defn update({m, b} = params, inp, tar) do
+    {grad_m, grad_b} = grad(params, &loss(&1, inp, tar))
+
+    {
+      m - grad_m * 0.01,
+      b - grad_b * 0.01
+    }
+  end
+
+  # initial starting point for both m and b.
+  defn init_random_params do
+    key = Nx.Random.key(999_999_999_999)
+    m = Nx.Random.normal(key, 0.0, 0.1)
+    b = Nx.Random.normal(key, 0.0, 0.1)
+    {m, b}
+  end
+
+  # The training loop takes batches of examples,
+  # and applies update after each batch, halting 
+  # only after some condition is met.
+  def train(epochs, data) do
+    init_params = init_random_params()
+
+    for _ <- 1..epochs, reduce: init_params do
+      acc ->
+        data
+        |> Enum.take(200)
+        |> Enum.reduce(
+          acc,
+          fn batch, cur_params ->
+            {inp, tar} = Enum.unzip(batch)
+            x = Nx.tensor(inp)
+            y = Nx.tensor(tar)
+            update(cur_params, x, y)
+          end
+        )
+    end
+  end
+end
+```
+
+The _grad_ function takes the parameters you want to evaluate the gradient at (_m_ and _b_), as well as a parameterized function - in this case the loss function. grad_m and grad_b are the gradients of m and b respectively. You use the gradients to update m by scaling the gradients by a factor of 0.01 and then subtracting this value from m. 0.01 is also called the _learning rate_.
+
+The function _init_random_params_ uses _Nx.random_normal/3_ to initialize _m_ and _b_ using a normal distribution with mean 0.0 and standard deviation 0.1.
+
+In the training loop, we take 200 batches from the stream and iteratively update the model parameters after each batch. We repeat this process _epochs_ number of times, returning the updated params after every epoch.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Just a note about the _reduce:_ part of the comprehension.
+
+When the _:reduce_ key is given, its value is used as the initial accumulator and the do block must be changed to use -> clauses, where the left side of -> receives the accumulated value of the previous iteration and the expression on the right side must return the new accumulator value. Once there are no more elements, the final accumulated value is returned. If there are no elements at all, then the initial accumulator value is returned. Example:
+
+```elixir
+for <<x <- "AbCabCABc">>, x in ?a..?z, reduce: %{} do
+  acc -> Map.update(acc, <<x>>, 1, &(&1 + 1))
+end
+```
+
+Now, we just need to call _LinReg2.train/2_ to return the learned m and b:
+
+```elixir
+{m, b} = LinReg2.train(100, data)
+IO.puts("Learned m: #{Nx.to_scalar(m)}\tLearned b: #{Nx.to_scalar(b)}")
+```
