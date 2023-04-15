@@ -1,0 +1,121 @@
+# Statistiska Centralbyrån
+
+```elixir
+Mix.install([
+  {:req, "~> 0.3.6"},
+  {:explorer, "~> 0.5.6"},
+  {:kino_explorer, "~> 0.1.4"},
+  {:json, "~> 1.4"}
+])
+```
+
+## Accessing the API
+
+The API can be found here: https://www.scb.se/vara-tjanster/oppna-data/api-for-statistikdatabasen/
+
+So, to show all the topics (in Swedish) we can go here:
+
+```elixir
+topics_url = "https://api.scb.se/OV0104/v1/doris/sv/ssd/"
+topics = Req.get!(topics_url)
+```
+
+Inspired by this Explorer demo by Jose Valim, we continue in a similar fashion: https://youtu.be/U6nuPjyAUPw
+
+```elixir
+require Explorer.DataFrame, as: DF
+```
+
+```elixir
+xtopics = DF.new(topics.body)
+```
+
+Now, to drill down into, for example, Population (Befolkning), we can go here:
+
+```elixir
+population_url = "https://api.scb.se/OV0104/v1/doris/sv/ssd/BE"
+population = Req.get!(population_url)
+```
+
+```elixir
+xpopulation = DF.new(population.body)
+```
+
+Let's continue to drill down into the Demografic analysis. We can get help how to construct the query here: https://www.statistikdatabasen.scb.se/pxweb/sv/ssd/START__BE__BE0701/LivslUtbFland/
+By selecting some key values I generated the JSON query below to be posted via the API.
+
+Also, have a look here at some Python API code: https://github.com/kirajcg/pyscbwrapper/blob/master/pyscbwrapper.ipynb
+
+```elixir
+demo_query = ~s({
+  "query": [
+    {
+      "code": "UtbildningsNiva",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "TOTALT"
+        ]
+      }
+    },
+    {
+      "code": "Fodelseregion",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "010"
+        ]
+      }
+    },
+    {
+      "code": "Kon",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "010"
+        ]
+      }
+    },
+    {
+      "code": "ContentsCode",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "000002DT"
+        ]
+      }
+    },
+    {
+      "code": "Tid",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "2021"
+        ]
+      }
+    }
+  ],
+  "response": {
+    "format": "px"
+  }
+})
+```
+
+Note that the data returned is in *latin1* so we need to convert it to *UTF-8*.
+
+```elixir
+demo_url = "https://api.scb.se/OV0104/v1/doris/sv/ssd/START/BE/BE0701/LivslUtbFland"
+demo_result = Req.post!(demo_url, body: demo_query).body |> :unicode.characters_to_binary(:latin1)
+```
+
+```elixir
+demo_data = DF.load_csv!(demo_result, delimiter: ";")
+```
+
+Hm...so what can we do with this data...wip...
+
+<!-- livebook:{"attrs":{"assign_to":null,"data_frame":"demo_data","data_frame_alias":"Elixir.DF","missing_require":null,"operations":[{"active":true,"column":null,"filter":null,"operation_type":"filters","type":"string","value":null}]},"chunks":null,"kind":"Elixir.KinoExplorer.DataTransformCell","livebook_object":"smart_cell"} -->
+
+```elixir
+demo_data
+```
