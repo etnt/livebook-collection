@@ -108,3 +108,150 @@ a_two_element_list = [9 | a_one_element_list]
 a_many_element_list = [2, 5, 3 | a_two_element_list]
 a_many_element_list
 ```
+
+## Functions
+
+Manipulating Lists "manually", as we did above, quickly becomes tedious and impractical. The solution is to create functions that operate on lists. For example, let us create a function that calculate the sum of all the integers in a list. But first let us consider how a Mathematical definition could look like:
+
+$$
+sum([]) = 0
+$$
+First we define that the sum of an empty list is zero.
+$$
+sum([Head | Tail]) = Head + sum(Tail)
+$$
+Then we define that the sum of a list is the first element added to the sum of the remaining list.
+
+This concept where we define our *sum* function in terms of itself is called *recursion*.
+We created two defintions (*clauses*); the first definition covering the trivial base case of an empty list; the second definition, covering the recursive case, breaks down the problem by adding the first element to the remaining list.
+
+Looking at the definition it seems pretty intuitive and fortunately we can almost write
+some identical Elixir code that implements our *sum* function:
+
+```elixir
+defmodule A do
+  def sum([]) do
+    0
+  end
+
+  def sum([head | tail]) do
+    head + sum(tail)
+  end
+end
+```
+
+The main difference is that we need to put our function in a module (**A**) and that we need to use a slightly different syntax for defining the two *sum* *function clauses*.
+
+Now let's call our *sum* function:
+
+```elixir
+A.sum(a_many_element_list)
+```
+
+This recursive a pattern, and some very similar patterns, will show up again and again. So let us continue by writing a function *count* that counts the number of elements in a list.
+
+Again, can we give a Mathematical definition?
+
+$$
+count([]) = 0
+$$
+An empty list has zero elements.
+$$
+count([Head | Tail]) = 1 + count(Tail)
+$$
+Remove the first element in the list and add one to the counting of the remaining list.
+
+The corresponding Elixir function looks very similar:
+
+```elixir
+defmodule B do
+  def count([]) do
+    0
+  end
+
+  def count([_head | tail]) do
+    1 + count(tail)
+  end
+end
+```
+
+Since we really isn't interested in the value of the first element in the list it is custom to add an underscore `_` in front of the variable (`_head`) to indicate this.
+
+Now let's run our *count* function:
+
+```elixir
+B.count(a_many_element_list)
+```
+
+Now let us consider a very common variation of this recursive pattern. How would we define the function that reverses the order of the elements in the list.
+
+Once again we can try to figure out a Math like definition:
+
+$$
+reverse([]) = []
+$$
+The base case is trivial, the reverse of an empty list is still an empty list.
+$$
+reverse([Head | Tail]) = reverse(Tail) ++ [Head]
+$$
+In the recursive case we have to introduce the append operator (`++`) that stitch together two lists. Note that we have to put the *Head* element in a list to make the append operator happy.
+
+Again, we can implement this in Elixir:
+
+```elixir
+defmodule C do
+  def reverse([]) do
+    []
+  end
+
+  def reverse([head | tail]) do
+    reverse(tail) ++ [head]
+  end
+end
+
+C.reverse(a_many_element_list)
+```
+
+However, **this is not a good solution**! The reason is that the second clause is not *tail recursive*. To be *tail recursive*, a function must call itself as the last thing it does. In this case this is not the case. The append operation is the last thing that run in the second clause, since it has to wait for `reverse(tail)` to finish before it can stitch together the result.
+
+(*A tail recursive function can execute in constant space, i.e it can reuse the same memory when it makes it recursive call since it doesn't have to return; it was the last call in the function remember. Compare this with a non tail recursive function that require new memory to be allocated for each recursive call.*)
+
+So we need to rewrite our *reverse* function so that it become *tail recursive*. Fortunatly, this leads us to another very common recursive pattern:
+
+```elixir
+defmodule D do
+  def reverse(list) do
+    reverse(list, [])
+  end
+
+  defp reverse([], acc) do
+    acc
+  end
+
+  defp reverse([head | tail], acc) do
+    reverse(tail, [head | acc])
+  end
+end
+
+D.reverse(a_many_element_list)
+```
+
+We have defined a helper function, also named *reverse* but which takes two argument. The second argument, called the *accumulator*, is the key to the solution here. We start with an empty *accumulator*, then we insert the first element in the *accumulator*, which will make this element to end up last in the *accumulator*. When all element has been traversed, we return the *accumulator* which now contain all the elements in reversed order.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Time for some exersices. Try to implement the following function, as shown by the examples below:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+[2,4,6] = E.double([1,2,3])
+
+[3,6,9] = F.multiply([1,2,3], 3)
+
+[0,1,2] = G.subtract([1,2,3], 1)
+
+3 = H.last([1,2,3])
+
+3 = I.mean([1,2,3])
+```
