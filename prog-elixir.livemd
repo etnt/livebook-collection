@@ -118,10 +118,13 @@ Manipulating Lists "manually", as we did above, quickly becomes tedious and impr
 $$
 sum([]) = 0
 $$
+
 First we define that the sum of an empty list is zero.
+
 $$
 sum([Head | Tail]) = Head + sum(Tail)
 $$
+
 Then we define that the sum of a list is the first element added to the sum of the remaining list.
 
 This concept where we define our *sum* function in terms of itself is called *recursion*.
@@ -157,10 +160,13 @@ Again, can we give a Mathematical definition?
 $$
 count([]) = 0
 $$
+
 An empty list has zero elements.
+
 $$
 count([Head | Tail]) = 1 + count(Tail)
 $$
+
 Remove the first element in the list and add one to the counting of the remaining list.
 
 The corresponding Elixir function looks very similar:
@@ -192,10 +198,13 @@ Once again we can try to figure out a Math like definition:
 $$
 reverse([]) = []
 $$
+
 The base case is trivial, the reverse of an empty list is still an empty list.
+
 $$
 reverse([Head | Tail]) = reverse(Tail) ++ [Head]
 $$
+
 In the recursive case we have to introduce the append operator (`++`) that stitch together two lists. Note that we have to put the *Head* element in a list to make the append operator happy.
 
 Again, we can implement this in Elixir:
