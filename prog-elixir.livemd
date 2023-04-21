@@ -2,6 +2,8 @@
 
 ## Introduction
 
+Intended audience is a beginner programmer. Note that code block can be evaluated by clicking on the *Evaluate* pop-up button.
+
 Here is a definition for you to think about: `the square of a number X is defined as X multiplied by itself`.
 
 It is a textual definition, not very hard to understand, but tedious to write out and hard to extend or modify, if you would like to do that.
