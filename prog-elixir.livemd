@@ -81,7 +81,7 @@ We have something called **tuples**:
 
 A **list** can grow and shrink by adding or removing elements from it, while a **tuple** has a fixed number of elements that can't be changed.
 
-We can only add to elements to the front of a list, as shown below:
+We can only add elements to the front of a list, as shown below:
 
 <!-- livebook:{"force_markdown":true} -->
 
@@ -91,9 +91,9 @@ a_one_element_list = [42 | an_empty_list]
 a_two_element_list = [9 | a_one_element_list]
 ```
 
-Using the bar (`|`) we add a new element, placed on the left side, where we have our original list on the right side of the bar.
+Using the bar (`|`) we add a new element, placed on the left side, on the right side of the bar we have our original list.
 
-We can add several elements add once as shown here:
+We can add several elements at once as shown here:
 
 <!-- livebook:{"force_markdown":true} -->
 
