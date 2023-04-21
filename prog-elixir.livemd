@@ -1,0 +1,110 @@
+# Programming in Elixir
+
+## Introduction
+
+Here is a definition for you to think about: `the square of a number X is defined as X multiplied by itself`.
+
+It is a textual definition, not very hard to understand, but tedious to write out and hard to extend or modify, if you would like to do that.
+
+We can use the language of Mathematics to express this in a shorter, and more exact way: 
+$$X^2 = X*X$$
+
+You could even define a function, like: $$square(X) = X*X$$
+
+Now, if we use the Elixir programming language, one way we can define this function is:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+square = fn(x) -> x*x end 
+```
+
+To call this function we can do as:
+
+```elixir
+square = fn x -> x * x end
+square.(3)
+```
+
+What we defined above was an anonymous (unnamed) function `fn(x) -> ...`. The name `square = ...` is called a `variable` and can be seen as a little box with a name (*square*) where we put the anonymous function. On line 2 we run the function that we but into *square*. The result is output below the code block when the block is evaluated.
+
+Another way of defining the *square* function in Elixir can be seen below:
+
+```elixir
+defmodule M do
+  def square(x) do
+    x * x
+  end
+end
+
+M.square(3)
+```
+
+Here we first define something called a *module* with the name **M**. It encloses the rest of the code between the first *do* and last *end*.
+
+In Elixir we group several functions into modules as a way to gather the code into logical units. It is a typical way of structuring your code (this is done in most programming languages actually).
+
+## Data types
+
+Note that we sent in the number 3 as an *argument* to our *square* function and that the function returned the number 9. The numbers in this case are actually whole numbers and we say that the are of the data type **integer**.
+
+Here are some other example of data types:
+
+* `3.14` is a **float**
+* `:hello` is an **atom**
+* `"Hello World"` is a **string**
+* `true` is a **boolean**
+
+A data type is a classification of data which tells the compiler or interpreter how the programmer intends to use the data.
+
+So a *float* like `3.14` is a decimal number; compare this to an *integer* which is a whole number and does not have any decimals. An *atom* is simply a named constant, notice how they start with a colon (`:joe`). A *string* typically contains a text constructed of a series of characters, it is surrounded by a double quote (`"nice weather!"`). Finally, a *boolean* value can either have the value `true` or `false`.
+
+<!-- livebook:{"break_markdown":true} -->
+
+Next we have what is called aggregated types, i.e various collections of the data types we saw above. So we can have a **list** of integers:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+[2,5,3,9,42]
+```
+
+We have something called **tuples**:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+{:name, "Joe"}
+```
+
+A **list** can grow and shrink by adding or removing elements from it, while a **tuple** has a fixed number of elements that can't be changed.
+
+We can only add to elements to the front of a list, as shown below:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+an_empty_list = []
+a_one_element_list = [42 | an_empty_list]
+a_two_element_list = [9 | a_one_element_list]
+```
+
+Using the bar (`|`) we add a new element, placed on the left side, where we have our original list on the right side of the bar.
+
+We can add several elements add once as shown here:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+a_many_element_list = [2, 5, 3 | a_two_element_list]
+```
+
+Try it below, add some more elements:
+
+```elixir
+an_empty_list = []
+a_one_element_list = [42 | an_empty_list]
+a_two_element_list = [9 | a_one_element_list]
+a_many_element_list = [2, 5, 3 | a_two_element_list]
+a_many_element_list
+```
