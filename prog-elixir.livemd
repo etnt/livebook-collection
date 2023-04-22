@@ -28,7 +28,7 @@ square = fn x -> x * x end
 square.(3)
 ```
 
-What we defined above was an anonymous (unnamed) function `fn(x) -> ...`. The name `square = ...` is called a `variable` and can be seen as a little box with a name (*square*) where we put the anonymous function. On line 2 we run the function that we but into *square*. The result is output below the code block when the block is evaluated.
+What we defined above was an anonymous (unnamed) function `fn(x) -> ...`. The name `square = ...` is called a `variable` and can be seen as a little box with a name (*square*) where we put the anonymous function. On line 2 we run the function that we put into *square*. The result is output (*9*) below the code block when the block is evaluated.
 
 Another way of defining the *square* function in Elixir can be seen below:
 
@@ -110,6 +110,43 @@ a_two_element_list = [9 | a_one_element_list]
 a_many_element_list = [2, 5, 3 | a_two_element_list]
 a_many_element_list
 ```
+
+We can also remove elements from the head of the list:
+
+```elixir
+[head | tail] = a_many_element_list
+IO.puts("head = #{head}")
+tail
+```
+
+Above, we pick the first element by *deconstructing* the list using the same syntax as when we *constructed* our lists in the previous examples. The difference is that now we have the list brackets and the bar on the left side of the equal sign. What we are doing here is called *pattern matching*, i.e on the right side of our equal sign (*the pattern match operator*) we have a list that we try to match against the pattern we have on the left side of the equal sign.
+
+For pattern matching to succeed:
+
+1. both sides need to be of the same data type
+2. any syntactical constrains need to be fullfilled
+
+So in our example, we have a list on both sides which fullfill rule (1), and we use the brackets and bar (2) to pick out the first element of the list and put it in the variable: *head* ,and leave the rest of the list in the variable: *tail*.
+
+Here is some examples where the pattern matching will fail:
+
+<!-- livebook:{"force_markdown":true} -->
+
+```elixir
+# ERROR - we can't pick out an element from an empty list
+[head|tail] = []
+
+# ERROR - we can't match a list of different length
+[head,tail] = [1,2,3,4]
+
+# OK - using the 'bar' will put the rest of the list in: tail
+[head | tail] = [1,2,3,4]
+
+# ERROR - we can't match a list with a tuple, not the same data type
+{head, tail} = [1,2,3,4]
+```
+
+Create a **Code** block and try out these examples!
 
 ## Functions
 
