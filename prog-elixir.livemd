@@ -306,4 +306,110 @@ Time for some exersices. Try to implement the following function, as shown by th
 [1,2] = J.take([1,2,3,4,5], 2)
 
 [4,5] = J.take([1,2,3,4,5], -2)
+
+[3,4,5] = K.drop([1,2,3,4,5], 2)
+```
+
+## More fun with anonymous fun's
+
+Remember the first square function we wrote. It was a so called *anonymous function* the we saved in a variable (*square*) so that we could invoke it later. In Elixir functions is also a data type, and just as with the other data types, e.g integer, atom, list, etc..., we can store them in a variable or pass them into another function in an argument.
+
+Check out the example below, we have a function that we may call *run* that takes two arguments,an *integer* and an anonymous function:
+
+```elixir
+defmodule Ex1 do
+  def run(number, function) do
+    function.(number)
+  end
+end
+```
+
+Now let's call our run function:
+
+```elixir
+Ex1.run(3, fn x -> x * x end)
+```
+
+Sit back and think about what we just did. We sent in a function to be executed by our *Ex1.run/2* function. What's cool with this is that we could send in another function, e.g to add the number to itself, like in:
+
+```elixir
+Ex1.run(3, fn x -> x + x end)
+```
+
+Now, if we have a list of integers, can we run the anonymous function on each member of that list? Yes we can, let us define the following function that we call *map*. As we did before, we can start by trying to define the base case and then the recursive case. We can write the clauses in a sort of simplified pseudo Elixir:
+
+$$
+map([], function) = []
+$$
+
+First we have the trivial, base case, where the list is empty and there is no need to invoke the *function*.
+
+$$
+map([head | tail], function) = [function(head) | map(tail, function)]
+$$
+
+The second clause is more complex, by using *pattern matching* we pick out the first element and the remaining list (*tail*), then we construct a new list where the first element will be what the function return after having operated on *head*; the rest of the list will be the result from a new call to the *map* function which will take the *tail* (remaining) list and the *function* as arguments.
+
+```elixir
+defmodule Ex2 do
+  def map([], _function) do
+    []
+  end
+
+  def map([head | tail], function) do
+    [function.(head) | map(tail, function)]
+  end
+end
+```
+
+It is time to try out our *map* function. Let us take a list of integers and square each element:
+
+```elixir
+Ex2.map([1, 2, 3], fn x -> x * x end)
+```
+
+We can try and add each element to itself:
+
+```elixir
+Ex2.map([1, 2, 3], fn x -> x + x end)
+```
+
+Recursion could be compared to riding a bike, when you are trying to learn riding a bike it seems impossible, but when you got it, you can't remember what the problem was.
+
+To visualize what happens, consider this, assume *f* is our square function
+
+```
+map([1,2,3], f)
+  [f(1) | map([2,3], f)]
+  [1    , f(2) | map([3], f)]
+  [1    , 4    , f(3) | map([], f)]
+  [1    , 4    , 9    | map([], f)]
+  [1    , 4    , 9    | []]
+  [1,4,9]
+```
+
+Look at the second last line of the above, apparently the following is true:
+
+```
+[1,4,9] = [1, 4, 9 | [] ]
+```
+
+And indeed this is true, the left hand side is just a nicer way to write a list compared to the right hand side. This kind of list is actually called a *well formed list*, and is really the only kind of list you are likely to use and work with.
+
+But what would happen if the last element of a list isn't an empty list (i.e it is not a *well formed list*)? Let's explore it below:
+
+```elixir
+[1, 4, 9] = [1, 4, 9 | []]
+```
+
+```elixir
+[1, 4, 9] = [1, 4, 9 | 16]
+```
+
+As you can see, the last example try to (pattern) match two lists which isn't equal and the match attempt fail and return an error message.
+
+As an exercise, make a couple of calls to the *map* function where you write some anonymous functions of your own.
+
+```elixir
+
 ```
