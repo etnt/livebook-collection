@@ -302,4 +302,8 @@ Time for some exersices. Try to implement the following function, as shown by th
 3 = H.last([1,2,3])
 
 3 = I.mean([1,2,3])
+
+[1,2] = J.take([1,2,3,4,5], 2)
+
+[4,5] = J.take([1,2,3,4,5], -2)
 ```
